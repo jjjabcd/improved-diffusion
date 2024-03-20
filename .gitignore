@@ -1,3 +1,11 @@
 .DS_Store
-__pycache__/
+__pycache__
+DATA
+Sample_image/
+Sample_image_2/
+Sample_image_3/
+Sample_view.ipynb
+improved_diffusion.egg-info/
+improved_diffusion/.ipynb_checkpoints/
+scripts/.ipynb_checkpoints/
 

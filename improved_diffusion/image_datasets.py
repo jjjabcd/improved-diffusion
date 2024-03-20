@@ -84,23 +84,28 @@ class ImageDataset(Dataset):
         # We are not on a new enough PIL to support the `reducing_gap`
         # argument, which uses BOX downsampling at powers of two first.
         # Thus, we do it by hand to improve downsample quality.
-        while min(*pil_image.size) >= 2 * self.resolution:
-            pil_image = pil_image.resize(
-                tuple(x // 2 for x in pil_image.size), resample=Image.BOX
-            )
+        # while min(*pil_image.size) >= 2 * self.resolution:
+        #     pil_image = pil_image.resize(
+        #         tuple(x // 2 for x in pil_image.size), resample=Image.BOX
+        #     )
 
-        scale = self.resolution / min(*pil_image.size)
-        pil_image = pil_image.resize(
-            tuple(round(x * scale) for x in pil_image.size), resample=Image.BICUBIC
-        )
+        # scale = self.resolution / min(*pil_image.size)
+        # pil_image = pil_image.resize(
+        #     tuple(round(x * scale) for x in pil_image.size), resample=Image.BICUBIC
+        # )
 
+
+        pil_image = pil_image.resize((26)56,25, resample=Image.BICUBIC)
+
+        
         arr = np.array(pil_image.convert("RGB"))
-        crop_y = (arr.shape[0] - self.resolution) // 2
-        crop_x = (arr.shape[1] - self.resolution) // 2
-        arr = arr[crop_y : crop_y + self.resolution, crop_x : crop_x + self.resolution]
+        #crop_y = (arr.shape[0] - self.resolution) // 2
+        #crop_x = (arr.shape[1] - self.resolution) // 2
+        #arr = arr[crop_y : crop_y + self.resolution, crop_x : crop_x + self.resolution]
         arr = arr.astype(np.float32) / 127.5 - 1
 
         out_dict = {}
         if self.local_classes is not None:
             out_dict["y"] = np.array(self.local_classes[idx], dtype=np.int64)
         return np.transpose(arr, [2, 0, 1]), out_dict
+
