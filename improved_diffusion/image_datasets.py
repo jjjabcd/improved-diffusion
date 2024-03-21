@@ -94,8 +94,8 @@ class ImageDataset(Dataset):
         #     tuple(round(x * scale) for x in pil_image.size), resample=Image.BICUBIC
         # )
 
-
-        pil_image = pil_image.resize((26)56,25, resample=Image.BICUBIC)
+        pil_image = pil_image.resize((self.resolution, self.resolution), resample=Image.BICUBIC)
+        # pil_image = pil_image.resize((256,256), resample=Image.BICUBIC)
 
         
         arr = np.array(pil_image.convert("RGB"))
