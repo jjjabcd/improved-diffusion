@@ -18,7 +18,17 @@ from improved_diffusion.script_util import (
     add_dict_to_argparser,
     args_to_dict,
 )
-
+def save_samples(all_images, all_labels, args, save_index):
+    arr = np.concatenate(all_images, axis=0)
+    if args.class_cond:
+        label_arr = np.concatenate(all_labels, axis=0)
+    shape_str = "x".join([str(x) for x in arr.shape])
+    out_path = os.path.join(logger.get_dir()),
+    logger.log(f"saving to {out_path}")
+    if args.class_cond:
+        np.savez(out_path, arr, label_arr)
+    else:
+        np.savez(out_path, arr)
 
 def main():
     args = create_argparser().parse_args()
@@ -39,6 +49,7 @@ def main():
     logger.log("sampling...")
     all_images = []
     all_labels = []
+    save_index = 0 # file save index
     while len(all_images) * args.batch_size < args.num_samples:
         model_kwargs = {}
         if args.class_cond:
@@ -68,21 +79,17 @@ def main():
             ]
             dist.all_gather(gathered_labels, classes)
             all_labels.extend([labels.cpu().numpy() for labels in gathered_labels])
+
+        if len(all_images) >= args.save_sample_interval / args.batch_size:
+            save_samples(all_images, all_labels, args, save_index)
+            all_images = []
+            all_labels = []
+            save_index += 1
+            
         logger.log(f"created {len(all_images) * args.batch_size} samples")
 
-    arr = np.concatenate(all_images, axis=0)
-    arr = arr[: args.num_samples]
-    if args.class_cond:
-        label_arr = np.concatenate(all_labels, axis=0)
-        label_arr = label_arr[: args.num_samples]
-    if dist.get_rank() == 0:
-        shape_str = "x".join([str(x) for x in arr.shape])
-        out_path = os.path.join(logger.get_dir(), f"samples_{shape_str}.npz")
-        logger.log(f"saving to {out_path}")
-        if args.class_cond:
-            np.savez(out_path, arr, label_arr)
-        else:
-            np.savez(out_path, arr)
+    if all_images:
+        save_samples(all_images, all_labels, args, save_index)
 
     dist.barrier()
     logger.log("sampling complete")
@@ -95,6 +102,7 @@ def create_argparser():
         batch_size=10,
         use_ddim=False,
         model_path="",
+        save_sample_interval=500,
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
