@@ -18,17 +18,20 @@ from improved_diffusion.script_util import (
     add_dict_to_argparser,
     args_to_dict,
 )
+
 def save_samples(all_images, all_labels, args, save_index):
     arr = np.concatenate(all_images, axis=0)
-    if args.class_cond:
-        label_arr = np.concatenate(all_labels, axis=0)
     shape_str = "x".join([str(x) for x in arr.shape])
-    out_path = os.path.join(logger.get_dir()),
+    out_path = os.path.join(logger.get_dir(), f"samples_{shape_str}_{save_index}.npz")
     logger.log(f"saving to {out_path}")
     if args.class_cond:
-        np.savez(out_path, arr, label_arr)
+        label_arr = np.concatenate(all_labels, axis=0)
+        # 배열에 키 할당
+        np.savez(out_path, images=arr, labels=label_arr)
     else:
-        np.savez(out_path, arr)
+        # 배열에 키 할당
+        np.savez(out_path, images=arr)
+
 
 def main():
     args = create_argparser().parse_args()
@@ -46,6 +49,7 @@ def main():
     model.to(dist_util.dev())
     model.eval()
 
+    total_samples_greated = 0
     logger.log("sampling...")
     all_images = []
     all_labels = []
@@ -80,13 +84,16 @@ def main():
             dist.all_gather(gathered_labels, classes)
             all_labels.extend([labels.cpu().numpy() for labels in gathered_labels])
 
+        
+        total_samples_created += len(gathered_samples)*args.batch_size
         if len(all_images) >= args.save_sample_interval / args.batch_size:
+            logger.log(f"created {len(all_images) * args.batch_size} samples")
             save_samples(all_images, all_labels, args, save_index)
             all_images = []
             all_labels = []
             save_index += 1
             
-        logger.log(f"created {len(all_images) * args.batch_size} samples")
+        
 
     if all_images:
         save_samples(all_images, all_labels, args, save_index)
