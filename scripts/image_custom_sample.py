@@ -49,7 +49,7 @@ def main():
     model.to(dist_util.dev())
     model.eval()
 
-    total_samples_greated = 0
+    total_samples_created = 0
     logger.log("sampling...")
     all_images = []
     all_labels = []
@@ -109,7 +109,7 @@ def create_argparser():
         batch_size=10,
         use_ddim=False,
         model_path="",
-        save_sample_interval=500,
+        save_sample_interval=50,
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
